@@ -10,10 +10,12 @@ permissions:
 
 jobs:
   release:
-    uses: wanstu/wails-desktop-kit/.github/workflows/wails-desktop.yml@v0.5.1
+    uses: wanstu/wails-desktop-kit/.github/workflows/wails-desktop.yml@v0.6.0
     with:
       app-name: frp-service-manager
       desktop-dir: cmd/frp-service-manager
-      linux-deb: true
-      linux-deb-description: Remote FRPS Dashboard manager
+      linux-package-formats: raw,deb
+      linux-package-description: Remote FRPS Dashboard manager
+      linux-desktop-file: packaging/frp-service-manager.desktop
+      linux-icon-file: cmd/frp-service-manager/assets/appicon.png
       publish-release: true

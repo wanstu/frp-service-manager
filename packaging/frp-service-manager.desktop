@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=FRP Service Manager
+Comment=Manage remote FRPS dashboards
+Exec=frp-service-manager
+Icon=frp-service-manager
+Terminal=false
+Categories=Network;Utility;
+StartupNotify=true
