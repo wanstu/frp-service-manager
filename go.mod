@@ -2,10 +2,7 @@ module frp-service-manager
 
 go 1.26
 
-require (
-	github.com/wailsapp/wails/v2 v2.15.0
-	github.com/wanstu/wails-desktop-kit v0.6.0
-)
+require github.com/wanstu/wails-desktop-kit v0.8.0
 
 require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
@@ -35,6 +32,7 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
+	github.com/wailsapp/wails/v2 v2.15.0 // indirect
 	github.com/zalando/go-keyring v0.2.8 // indirect
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/net v0.56.0 // indirect

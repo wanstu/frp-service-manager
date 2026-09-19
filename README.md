@@ -19,7 +19,7 @@
 - 代理列表：优先尝试新版本聚合接口，并自动回退旧版 `/api/proxy/{type}`。
 - 保留原始 Dashboard JSON，便于兼容不同 FRP 版本。
 - 系统托盘、单实例、开机启动。
-- Kit v0.6.0 light / dark / system 明暗模式与 Runtime Theme；主题包由 Kit 在运行时同步、校验和缓存，Theme 仓库更新无需重新构建应用。
+- Kit v0.8.0 light / dark / system 明暗模式与 Runtime Theme；Linux 默认关闭到托盘；托盘点击行为由桌面环境与底层托盘后端决定；主题包由 Kit 在运行时同步、校验和缓存。
 - GitHub Release 使用 Kit Packaging Pipeline，同时发布 Linux 裸二进制与 `.deb` 安装包；`.deb` 自带桌面启动项与应用图标。
 - Windows / Linux / macOS 的 Kit 桌面生命周期基础能力。
 

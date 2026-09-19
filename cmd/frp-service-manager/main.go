@@ -46,7 +46,6 @@ func runDesktop(app *App, launch desktopkit.LaunchOptions) error {
 	window.Height = 760
 	window.MinWidth = 920
 	window.MinHeight = 620
-	window.HidePolicy = desktopkit.HideAlways
 	window.StartHiddenOnAutoStart = true
 	window.Background = desktopkit.Color{R: 245, G: 247, B: 250, A: 1}
 
@@ -62,14 +61,15 @@ func runDesktop(app *App, launch desktopkit.LaunchOptions) error {
 	})
 
 	return desktopkit.Run(desktopkit.Config{
-		ID:             config.AppID,
-		Title:          "FRP Service Manager",
-		Assets:         kitui.Mount(assets),
-		Theme:          desktopkit.DefaultThemeConfig(),
-		Bind:           []interface{}{app},
-		Launch:         launch,
-		Window:         window,
-		SingleInstance: true,
+		ID:                   config.AppID,
+		Title:                "FRP Service Manager",
+		Assets:               kitui.Mount(assets),
+		Theme:                desktopkit.DefaultThemeConfig(),
+		Bind:                 []interface{}{app},
+		Launch:               launch,
+		Window:               window,
+		SingleInstance:       true,
+		SecondInstancePolicy: desktopkit.SecondInstanceWakeManual,
 		Tray: desktopkit.TrayConfig{
 			Enabled:            true,
 			Icon:               appIcon,
@@ -78,7 +78,7 @@ func runDesktop(app *App, launch desktopkit.LaunchOptions) error {
 			Items:              []desktopkit.TrayItem{openDashboard},
 		},
 		Hooks: desktopkit.Hooks{
-			Startup:  app.startup,
+			Ready:    app.setController,
 			Shutdown: app.shutdown,
 		},
 	})

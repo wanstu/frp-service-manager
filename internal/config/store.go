@@ -3,14 +3,11 @@ package config
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
+	"github.com/wanstu/wails-desktop-kit/jsonstore"
 	kitpaths "github.com/wanstu/wails-desktop-kit/paths"
 )
 
@@ -31,9 +28,8 @@ type Settings struct {
 }
 
 type Store struct {
-	mu   sync.Mutex
-	dir  string
-	path string
+	dir    string
+	values *jsonstore.Store[Settings]
 }
 
 func NewStore() (*Store, error) {
@@ -41,66 +37,31 @@ func NewStore() (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Store{dir: dir, path: filepath.Join(dir, "settings.json")}, nil
+	values := jsonstore.New(filepath.Join(dir, "settings.json"), jsonstore.Options[Settings]{
+		Default: func() Settings {
+			return Settings{Connections: []Connection{}}
+		},
+		Normalize: func(settings *Settings) {
+			if settings.Connections == nil {
+				settings.Connections = []Connection{}
+			}
+		},
+	})
+	return &Store{dir: dir, values: values}, nil
 }
 
 func (s *Store) Dir() string { return s.dir }
 
 func (s *Store) Load() (Settings, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	data, err := os.ReadFile(s.path)
-	if errors.Is(err, os.ErrNotExist) {
-		return Settings{Connections: []Connection{}}, nil
-	}
+	settings, err := s.values.Load()
 	if err != nil {
 		return Settings{}, fmt.Errorf("读取设置失败: %w", err)
-	}
-	var settings Settings
-	if err := json.Unmarshal(data, &settings); err != nil {
-		return Settings{}, fmt.Errorf("解析设置失败: %w", err)
-	}
-	if settings.Connections == nil {
-		settings.Connections = []Connection{}
 	}
 	return settings, nil
 }
 
 func (s *Store) Save(settings Settings) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if settings.Connections == nil {
-		settings.Connections = []Connection{}
-	}
-	data, err := json.MarshalIndent(settings, "", "  ")
-	if err != nil {
-		return fmt.Errorf("编码设置失败: %w", err)
-	}
-	data = append(data, '\n')
-	tmp, err := os.CreateTemp(s.dir, ".settings-*.tmp")
-	if err != nil {
-		return fmt.Errorf("创建临时设置文件失败: %w", err)
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if err := tmp.Chmod(0o600); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpPath, s.path); err != nil {
+	if err := s.values.Save(settings); err != nil {
 		return fmt.Errorf("保存设置失败: %w", err)
 	}
 	return nil

@@ -11,7 +11,7 @@ import (
 	"frp-service-manager/internal/config"
 	"frp-service-manager/internal/frps"
 
-	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	desktopkit "github.com/wanstu/wails-desktop-kit"
 	kitautostart "github.com/wanstu/wails-desktop-kit/autostart"
 	"github.com/wanstu/wails-desktop-kit/secureconfig"
 )
@@ -48,8 +48,8 @@ type App struct {
 	secrets       *secureconfig.Store
 	launchAtLogin *kitautostart.Manager
 
-	mu  sync.RWMutex
-	ctx context.Context
+	mu         sync.RWMutex
+	controller *desktopkit.Controller
 }
 
 func NewApp() (*App, error) {
@@ -73,13 +73,17 @@ func NewApp() (*App, error) {
 	return &App{store: store, secrets: secrets, launchAtLogin: launchAtLogin}, nil
 }
 
-func (a *App) startup(ctx context.Context) {
+func (a *App) setController(controller *desktopkit.Controller) {
 	a.mu.Lock()
-	a.ctx = ctx
+	a.controller = controller
 	a.mu.Unlock()
 }
 
-func (a *App) shutdown(context.Context) {}
+func (a *App) shutdown(context.Context) {
+	a.mu.Lock()
+	a.controller = nil
+	a.mu.Unlock()
+}
 
 func (a *App) GetState() (UIState, error) {
 	settings, err := a.store.Load()
@@ -306,12 +310,11 @@ func (a *App) OpenDashboard(id string) error {
 	if err != nil {
 		return err
 	}
-	ctx := a.runtimeContext()
-	if ctx == nil {
+	controller := a.runtimeController()
+	if controller == nil {
 		return errors.New("桌面运行时尚未就绪")
 	}
-	wailsruntime.BrowserOpenURL(ctx, connection.BaseURL)
-	return nil
+	return controller.OpenURL(connection.BaseURL)
 }
 
 func (a *App) SetLaunchAtLogin(enabled bool) (UIState, error) {
@@ -338,8 +341,8 @@ func (a *App) passwordFor(connection config.Connection) (string, error) {
 	return string(value), nil
 }
 
-func (a *App) runtimeContext() context.Context {
+func (a *App) runtimeController() *desktopkit.Controller {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
-	return a.ctx
+	return a.controller
 }
