@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FRP Service Manager</title>
+  <link rel="stylesheet" href="/desktopkit/tokens.css">
+  <link rel="stylesheet" href="/desktopkit/base.css">
+  <link rel="stylesheet" href="/desktopkit/components.css">
+  <link rel="stylesheet" href="/desktopkit/navigation.css">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/desktopkit/theme.js"></script>
+</head>
+<body class="dk-app-shell">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div>
+          <strong>FRP Service Manager</strong>
+          <small>远程 FRPS 管理</small>
+        </div>
+      </div>
+
+      <div class="sidebar-heading">
+        <span>FRPS 连接</span>
+        <button id="addConnection" class="icon-button" type="button" title="添加连接">+</button>
+      </div>
+      <div id="connectionList" class="connection-list"></div>
+
+      <div class="sidebar-footer">
+        <label class="dk-field compact-field">
+          明暗模式
+          <select id="themeMode">
+            <option value="system">跟随系统</option>
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
+          </select>
+        </label>
+        <label class="dk-field compact-field theme-pack-field">
+          主题包
+          <select id="themePack">
+            <option value="">Kit 默认</option>
+          </select>
+        </label>
+        <label class="dk-setting-row compact-setting">
+          <span>开机启动</span>
+          <input id="launchAtLogin" class="dk-switch" type="checkbox">
+        </label>
+        <div id="dataDir" class="data-dir"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">当前连接</div>
+          <h1 id="pageTitle">尚未添加 FRPS</h1>
+          <div id="pageURL" class="muted">添加一个已经部署好的 FRPS Dashboard 连接。</div>
+        </div>
+        <div class="top-actions">
+          <span id="connectionStatus" class="dk-status-pill">未连接</span>
+          <button id="openDashboard" class="dk-button" type="button" disabled>浏览器打开</button>
+          <button id="refresh" class="dk-button dk-button-primary" type="button" disabled>刷新</button>
+        </div>
+      </header>
+
+      <div id="message" class="message hidden"></div>
+
+      <section id="emptyState" class="empty-state">
+        <div class="empty-icon">S</div>
+        <h2>连接你的 FRPS Dashboard</h2>
+        <p>这个应用不会安装或启动 frps，只管理已经部署并开启 Dashboard 的服务端。</p>
+        <button id="emptyAdd" class="dk-button dk-button-primary" type="button">添加第一个连接</button>
+      </section>
+
+      <div id="workspace" class="workspace hidden">
+        <nav class="tabs" aria-label="FRPS 信息">
+          <button class="tab is-active" data-tab="overview" type="button">概览</button>
+          <button class="tab" data-tab="clients" type="button">客户端</button>
+          <button class="tab" data-tab="proxies" type="button">代理</button>
+          <button class="tab" data-tab="raw" type="button">原始数据</button>
+        </nav>
+
+        <section id="tab-overview" class="tab-panel">
+          <div id="overviewCards" class="metric-grid"></div>
+          <div class="dk-panel dk-stack">
+            <div class="panel-title-row">
+              <div>
+                <h2>服务状态</h2>
+                <p class="muted">来自 FRPS Dashboard API</p>
+              </div>
+              <span id="apiMode" class="dk-status-pill">—</span>
+            </div>
+            <div id="serverInfo" class="detail-grid"></div>
+          </div>
+          <div id="warningsPanel" class="dk-panel warning-panel hidden">
+            <h3>兼容提示</h3>
+            <div id="warnings"></div>
+          </div>
+        </section>
+
+        <section id="tab-clients" class="tab-panel hidden">
+          <div class="dk-panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>客户端</h2>
+                <p class="muted">新版本 FRPS 提供客户端列表 API；旧版本可能只在代理信息中体现客户端。</p>
+              </div>
+              <span id="clientCount" class="dk-status-pill">0</span>
+            </div>
+            <div class="table-toolbar">
+              <label class="table-filter">
+                <span>筛选字段</span>
+                <select id="clientsFilterColumn"><option value="">全部字段</option></select>
+              </label>
+              <label class="table-search">
+                <span>筛选</span>
+                <input id="clientsFilter" type="search" autocomplete="off" placeholder="输入关键词筛选客户端">
+              </label>
+              <button id="clientsClearFilter" class="dk-button table-clear" type="button">清除</button>
+            </div>
+            <div id="clientsTable" class="table-wrap"></div>
+          </div>
+        </section>
+
+        <section id="tab-proxies" class="tab-panel hidden">
+          <div class="dk-panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>代理</h2>
+                <p class="muted">自动兼容新版聚合接口与旧版按类型接口。</p>
+              </div>
+              <span id="proxyCount" class="dk-status-pill">0</span>
+            </div>
+            <div class="table-toolbar">
+              <label class="table-filter">
+                <span>筛选字段</span>
+                <select id="proxiesFilterColumn"><option value="">全部字段</option></select>
+              </label>
+              <label class="table-search">
+                <span>筛选</span>
+                <input id="proxiesFilter" type="search" autocomplete="off" placeholder="输入名称、类型、状态等">
+              </label>
+              <button id="proxiesClearFilter" class="dk-button table-clear" type="button">清除</button>
+            </div>
+            <div id="proxiesTable" class="table-wrap"></div>
+          </div>
+        </section>
+
+        <section id="tab-raw" class="tab-panel hidden">
+          <div class="dk-panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>原始 Dashboard 数据</h2>
+                <p class="muted">便于兼容不同 FRP 版本时核对字段。</p>
+              </div>
+            </div>
+            <pre id="rawData" class="raw-data"></pre>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="connectionDialog" class="dk-dialog connection-dialog">
+    <form id="connectionForm" method="dialog" class="dialog-form">
+      <div class="dialog-header">
+        <div>
+          <div class="eyebrow">FRPS Dashboard</div>
+          <h2 id="dialogTitle">添加连接</h2>
+        </div>
+        <button id="dialogClose" class="icon-button" value="cancel" type="button">×</button>
+      </div>
+
+      <input id="connectionId" type="hidden">
+      <div class="dk-form-grid connection-form-grid">
+        <label class="dk-field">
+          名称
+          <input id="connectionName" autocomplete="off" placeholder="例如：生产 FRPS">
+        </label>
+        <label class="dk-field is-span-2">
+          Dashboard 地址
+          <input id="connectionURL" autocomplete="off" placeholder="https://frps.example.com:7500">
+        </label>
+        <label class="dk-field">
+          用户名
+          <input id="connectionUser" autocomplete="off" placeholder="Dashboard 用户名">
+        </label>
+        <label class="dk-field">
+          密码
+          <input id="connectionPassword" type="password" autocomplete="new-password" placeholder="Dashboard 密码（可选）">
+          <small id="passwordHint" class="muted"></small>
+        </label>
+      </div>
+
+      <label class="dk-setting-row">
+        <span>
+          <strong>跳过 TLS 证书校验</strong>
+          <small>仅用于你明确信任的自签名 HTTPS Dashboard。</small>
+        </span>
+        <input id="skipTLSVerify" class="dk-switch" type="checkbox">
+      </label>
+
+      <label id="clearPasswordRow" class="dk-setting-row hidden">
+        <span>
+          <strong>清除已保存密码</strong>
+          <small>保存后该连接将不再使用密码。</small>
+        </span>
+        <input id="clearPassword" class="dk-switch" type="checkbox">
+      </label>
+
+      <div id="testResult" class="test-result hidden"></div>
+
+      <div class="dialog-actions">
+        <button id="deleteConnection" class="dk-button danger hidden" type="button">删除连接</button>
+        <span class="dialog-spacer"></span>
+        <button id="testConnection" class="dk-button" type="button">测试连接</button>
+        <button id="cancelDialog" class="dk-button" type="button">取消</button>
+        <button id="saveConnection" class="dk-button dk-button-primary" type="submit">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="jsonDialog" class="dk-dialog json-dialog">
+    <div class="json-dialog-shell">
+      <div class="dialog-header">
+        <div>
+          <div class="eyebrow">结构化数据</div>
+          <h2 id="jsonDialogTitle">字段详情</h2>
+        </div>
+        <button id="jsonDialogClose" class="icon-button" type="button" aria-label="关闭">×</button>
+      </div>
+      <pre id="jsonDialogContent" class="raw-data json-dialog-content"></pre>
+      <div class="dialog-actions">
+        <span class="dialog-spacer"></span>
+        <button id="jsonDialogDone" class="dk-button dk-button-primary" type="button">关闭</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+.idea/
+cmd/frp-service-manager/build/bin/
+cmd/frp-service-manager/frontend/wailsjs/
+*.exe
+dist/
