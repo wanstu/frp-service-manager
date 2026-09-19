@@ -19,7 +19,8 @@
 - 代理列表：优先尝试新版本聚合接口，并自动回退旧版 `/api/proxy/{type}`。
 - 保留原始 Dashboard JSON，便于兼容不同 FRP 版本。
 - 系统托盘、单实例、开机启动。
-- Kit v0.5.0 light / dark / system 明暗模式与 Runtime Theme；主题包由 Kit 在运行时同步、校验和缓存，Theme 仓库更新无需重新构建应用。
+- Kit v0.5.1 light / dark / system 明暗模式与 Runtime Theme；主题包由 Kit 在运行时同步、校验和缓存，Theme 仓库更新无需重新构建应用。
+- GitHub Release 使用 Kit 原生 Linux Debian 打包能力，同时发布 Linux 裸二进制与 `.deb` 安装包。
 - Windows / Linux / macOS 的 Kit 桌面生命周期基础能力。
 
 ## FRPS 端要求
